@@ -1,0 +1,48 @@
+What is it?
+PL/SQL Profiler is a Oracle tool that give you a "time overview" of a procedure that is being executed.
+
+How does it work?
+Oracle have a package available that have some procedures to help you to analize a procedure, showing to you which steps inside it are taking more time to execute.
+Just remembering that Profiler is different than Trace.
+
+
+Step by step:
+1- your user needs two grants:
+  grant execute on DBMS_HPROF to imob;
+  grant create any directory to imob;
+  dbmshptab.sql
+
+2- You need to create an Oracle directory, that's a virtual directory as an Oracle object where you set an physical directory on database server
+
+  create or replace directory DIR_TEST_PROFILER as 'C:\Temp';
+3- You need to start the profiling
+     DBMS_HPROF.start_profiling('DIR_TEST_PROFILER','output.trc');
+     where you send as parameter the directory you just created and an output file to have the results.
+4- You run your procedure
+5-  You need to stop the profiling
+  DBMS_HPROF.stop_profiling;
+6- You need to run the analyzer. This procedure will read your output file, format it and put this data on some tables. It'll return the runid where you can identify your process after executing.
+
+7- You can check the results on a public synonym created previously: dbmshp_function_info
+
+
+declare
+  runid NUMBER;
+begin
+  DBMS_HPROF.start_profiling('DIR_TEST_PROFILER','output.trc');
+  administration.init();
+  DBMS_HPROF.stop_profiling;
+
+  runid := DBMS_HPROF.analyze(LOCATION=>'DIR_TEST_PROFILER',
+                              FILENAME=>'output.trc');
+  DBMS_OUTPUT.PUT_LINE('runid = ' || runid);
+end;
+/
+1
+
+select *
+from dbmshp_function_info
+where runid = 1
+
+
+It's a good tool to fastly identify problems in your process and you can give some tunning to it making it faster.
